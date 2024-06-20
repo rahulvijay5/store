@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// schema.prisma
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique 
+  phone     String    
+  location  String
+  username  String    @unique
+  shopType  String?
+  latitude  Float?    // Add latitude field
+  longitude Float?    // Add longitude field
+  orders    Order[]   // Define the one-to-many relationship with Order
+  basket    Basket?   // Define the one-to-one relationship with Basket
+}
+
+// Define the Product model
+model Product {
+  id            Int      @id @default(autoincrement())
+  name          String
+  packagingSize String
+  price         Float
+  creationDate  DateTime
+  description   String?
+  analytics     ProductAnalytics[]  // Define the one-to-many relationship with ProductAnalytics
+  orders        OrderProduct[]      // Define the many-to-many relationship with Order
+  basket        BasketProduct[]
+  orderQty      Int                // New field to store the quantity of the product in an order
+}
+
+// Define the Order model
+model Order {
+  id         Int           @id @default(autoincrement())
+  userId     Int
+  orderDate  DateTime
+  status     String
+  user       User          @relation(fields: [userId], references: [id])
+  products   OrderProduct[] // Define the many-to-many relationship with Product
+}
+
+// Define the Basket model
+model Basket {
+  id         Int          @id @default(autoincrement())
+  userId     Int          @unique
+  user       User         @relation(fields: [userId], references: [id])
+  products   BasketProduct[]
+}
+
+// Define the ProductAnalytics model
+model ProductAnalytics {
+  id         Int        @id @default(autoincrement())
+  productId  Int
+  date       DateTime
+  salesQty   Int
+  revenue    Float
+  product    Product    @relation(fields: [productId], references: [id])
+}
+
+// Define the OrderProduct model for the many-to-many relationship
+model OrderProduct {
+  orderId   Int
+  productId Int
+  quantity  Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+  @@id([orderId, productId])
+}
+
+// Define the BasketProduct model for the many-to-many relationship
+model BasketProduct {
+  basketId  Int
+  productId Int
+  quantity  Int
+  basket    Basket  @relation(fields: [basketId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+  @@id([basketId, productId])
+}
