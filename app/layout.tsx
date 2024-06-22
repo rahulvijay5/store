@@ -29,7 +29,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Navbar/>
-            <div className="sm:mx-8 mx-4">
+            <div className="sm:container mx-2">
             {children}
             </div>
             <Toaster/>

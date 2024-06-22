@@ -1,11 +1,22 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
 
-declare global {
-  var prisma: PrismaClient | undefined
-}
+let prisma: PrismaClient | null = null;
+// TODO: add singleton prisma client
 
-const prisma = global.prisma || new PrismaClient()
+export const getPrismaClient = (): PrismaClient => {
+  if (!prisma) {
+    prisma = new PrismaClient();
+    console.log('prisma client created');
+  }
+  return prisma;
+};
 
-if (process.env.NODE_ENV === 'development') global.prisma = prisma
+export const prun = getPrismaClient()
 
-export default prisma
+export const cleanup = async (): Promise<void> => {
+    if (prisma) {
+      await prisma.$disconnect();
+      console.log('prisma disconnected');
+      
+    }
+};

@@ -1,13 +1,12 @@
-import prisma from "@/lib/prisma";
+import { prun } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs";
+import { NextResponse } from "next/server";
 
 export async function User() {
   const user = await currentUser();
-  return await(
-    {
-      user
-    }
-  )
+  return await {
+    user,
+  };
 }
 
 export async function createUser(userData: any) {
@@ -17,20 +16,22 @@ export async function createUser(userData: any) {
     throw new Error("User not found.");
   }
 
-  return await prisma.user.create({
+  return await prun.user.create({
     data: userData,
   });
 }
 
-export async function getUserById(userId: number) {
-  const user = await currentUser();
-
-  if (!user) {
-    throw new Error("User not found.");
-  }
-
-  const getuser = await prisma.user.findUnique({
-    where: { id: userId },
+export async function checkUserInDb(clerkId: string) {
+  const checkUserAlreadyExists = await prun.user.findFirst({
+    where: {
+      clerkId: clerkId,
+    },
   });
-  return getuser;
+  if (checkUserAlreadyExists) {
+    return new NextResponse(
+      JSON.stringify({
+        message: "User already exists!",
+      })
+    );
+  }
 }
