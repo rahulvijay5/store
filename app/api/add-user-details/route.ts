@@ -24,7 +24,8 @@ export async function POST(req:NextRequest){
             clerkId: clerkId,
             phoneNumber: phone,
             address: address,
-            businessName: businessName
+            businessName: businessName,
+            username:businessName
         }
     })
     try {

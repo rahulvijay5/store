@@ -15,7 +15,6 @@ export async function createUser(userData: any) {
   if (!user) {
     throw new Error("User not found.");
   }
-
   return await prun.user.create({
     data: userData,
   });

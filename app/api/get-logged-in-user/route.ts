@@ -3,10 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  console.log("I got here!");
   const clerk: string | null = searchParams.get("clerk");
   if (clerk) {
-    console.log(clerk);
     try {
       const user = await prun.user.findUnique({
         where: {

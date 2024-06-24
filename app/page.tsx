@@ -1,9 +1,5 @@
 import { User } from "@/actions/userActions";
 import HomeMain from "@/components/HomeMain";
-import { ModeToggle } from "@/components/ThemeSwitcher";
-import { UserButton, currentUser } from "@clerk/nextjs";
-import OrderHistory from "@/components/OrderHistory";
-import Test from "@/components/Test";
 
 export default async function Home() {
   const user = await User();

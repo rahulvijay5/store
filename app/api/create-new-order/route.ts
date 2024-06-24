@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         Sup1000: Sup1000,
       },
     });
-    console.log(order)
+    console.log("Got a new Order:",order)
     return NextResponse.json({message: order,status:200});
   } catch (error) {
     console.error("Error creating order:", error);

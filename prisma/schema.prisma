@@ -11,12 +11,12 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
+  id          Int       @id @default(autoincrement())
+  email       String?   @unique
   name        String?
-  username    String?
-  clerkId     String   @unique
-  phoneNumber String?
+  username    String?   @unique
+  clerkId     String?   @unique
+  phoneNumber String    @unique
   address     String?
   businessName String?
   orders      Order[]

@@ -1,11 +1,6 @@
-export const Prices = {
-  Regular: { "250gm": 1800, "500gm": 1800, "1000gm": 1800 },
-  Super: { "250gm": 2000, "500gm": 2000, "1000gm": 2000 },
-};
-
 type CartItem = {
-  type: "Regular" | "Super";
-  size: "250gm" | "500gm" | "1000gm";
+  type: string;
+  size: string;
   quantity: number;
   price: number;
 };
@@ -21,10 +16,59 @@ type Counts = {
   Sup1000: number;
 };
 
-interface OrderHistoryProps {
-  orders: Order[];
-}
+type OrderDbStyle = {
+  id: number;
+  userId: number;
+  totalPrice: number;
+  totalWeight: number;
+  pickupDate: Date;
+  Reg250: number | null;
+  Reg500: number | null;
+  Reg1000: number | null;
+  Sup250: number | null;
+  Sup500: number | null;
+  Sup1000: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
+type OrderDbStyleWithUser = {
+  id: number;
+  userId: number;
+  totalPrice: number;
+  totalWeight: number;
+  pickupDate: Date;
+  Reg250: number | null;
+  Reg500: number | null;
+  Reg1000: number | null;
+  Sup250: number | null;
+  Sup500: number | null;
+  Sup1000: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+  user: User;
+};
+
+type User = {
+  id: number;
+  email: string;
+  name: string;
+  username: string;
+  clerkId: string;
+  phoneNumber: string;
+  address: string;
+  businessName: string;
+  orders: OrderDbStyle[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+interface AdminDashboardProps {
+  mail: string;
+}
+interface OrderHistoryProps {
+  userId: number;
+}
 export interface OrderHistoryComponentProps extends OrderHistoryProps {}
 // type OrderHistoryProps = {
 //   orders: Order[];
@@ -42,8 +86,52 @@ type Order = {
 type CartProps = {
   cart: CartItem[];
   total: number;
-  totalWeight:number;
+  totalWeight: number;
   pickupDate: Date | null;
 };
 
-export type { CartItem, TypeOfCart, Order, CartProps, Counts };
+type TypeOfInsights = {
+  thisWeeksSales: {
+    totalPrice: number;
+    totalWeight: number;
+  };
+  thisMonthsSales: {
+    totalPrice: number;
+    totalWeight: number;
+  };
+};
+
+type UserDetailsExpanded = {
+  userDetails: User;
+  last6Orders: OrderDbStyle[];
+  insights: {
+    lastMonth: {
+      totalPrice: number;
+      totalWeight: number;
+    };
+    lastYear: {
+      totalPrice: number;
+      totalWeight: number;
+    };
+    thisMonth: {
+      totalPrice: number;
+      totalWeight: number;
+    };
+    thisYear: {
+      totalPrice: number;
+      totalWeight: number;
+    };
+  };
+};
+export type {
+  CartItem,
+  TypeOfCart,
+  Order,
+  OrderDbStyle,
+  User,
+  UserDetailsExpanded,
+  TypeOfInsights,
+  OrderDbStyleWithUser,
+  CartProps,
+  Counts,
+};

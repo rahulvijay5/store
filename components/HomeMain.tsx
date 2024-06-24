@@ -1,56 +1,40 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { Button } from "./ui/button";
-import Cart from "./Cart";
-import { formatDate } from "@/lib/utils";
-import OrderHistory from "./OrderHistory";
-import { useToast } from "./ui/use-toast";
-import { createNewOrder, getLoggedInUser } from "@/actions/orderActions";
 import { useAuth } from "@clerk/nextjs";
-import { redirect, useRouter } from "next/navigation";
-import { TypeOfCart, CartItem, Counts, Order, Prices } from "@/lib/types";
-import { revalidatePath } from "next/cache";
-import { CloudDrizzle } from "lucide-react";
-import Confetti from 'react-confetti'
+import DatePicker from "react-datepicker";
+import React, { useEffect, useState } from "react";
+import "react-datepicker/dist/react-datepicker.css";
+import { useRouter } from "next/navigation";
+
+import Cart from "./Cart";
+import { Button } from "./ui/button";
+import { useToast } from "./ui/use-toast";
+import { TypeOfCart, CartItem, Counts, Order } from "@/lib/types";
+import { Prices } from "@/lib/constants";
+import { ToastAction } from "./ui/toast";
 
 const HomeMain = () => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const initialCart = [
+    { type: "Regular", size: "250gm", quantity: 0, price: 0 },
+    { type: "Regular", size: "500gm", quantity: 0, price: 0 },
+    { type: "Regular", size: "1000gm", quantity: 0, price: 0 },
+    { type: "Super", size: "250gm", quantity: 0, price: 0 },
+    { type: "Super", size: "500gm", quantity: 0, price: 0 },
+    { type: "Super", size: "1000gm", quantity: 0, price: 0 },
+  ];
+
+  const [cart, setCart] = useState<CartItem[]>(initialCart);
   const [userIdInDb, setUserIdInDb] = useState<number>();
-  const [orderHistory, setOrderHistory] = useState<Order[] | []>([]);
+  const [isLoading,setIsLoading] = useState<boolean>(false);
   const [pickupDate, setPickupDate] = useState<Date | null>(new Date());
   const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(false);
 
   const { toast } = useToast();
   const { userId } = useAuth();
   const router = useRouter();
-  console.log(isInitialFetchDone);
-
-  // const fetchOrders = async (): Promise<Order[]> => {
-  //   // Replace with actual API call
-  //   return [
-  //     // {
-  //     //   id: 1,
-  //     //   date: "15/06/2024",
-  //     //   total: 3600,
-  //     //   items: [{ type: "Regular", size: "250gm", quantity: 40, price: 1800 }],
-  //     //   pickupDate: "16/06/2024",
-  //     // },
-  //     // {
-  //     //   id: 2,
-  //     //   date: "15/06/2024",
-  //     //   total: 3600,
-  //     //   items: [{ type: "Regular", size: "250gm", quantity: 40, price: 1800 }],
-  //     //   pickupDate: "16/06/2024",
-  //     // },
-  //   ];
-  // };
 
   const checkUser = async () => {
     if (!isInitialFetchDone) {
-      console.log("I am here");
       try {
         const response = await fetch(
           `/api/get-logged-in-user?clerk=${userId}`,
@@ -60,7 +44,7 @@ const HomeMain = () => {
         );
         const res = await response.json();
         if (res.status == 200) {
-          console.log("Do further Steps");
+          // Do further steps in here, if needed!
           setUserIdInDb(res.message);
           // fetchOrders().then((data) => setOrderHistory(data));
         } else {
@@ -78,34 +62,35 @@ const HomeMain = () => {
   };
 
   useEffect(() => {
-    console.log("useEffect triggered");
+    console.log("useEffect triggered as site entered");
     checkUser();
   }, [isInitialFetchDone]);
 
-  const handleAddToCart = (
+  const handleCancel = () => {
+    setCart(initialCart);
+  };
+
+  const handleAddProduct = (
     type: "Regular" | "Super",
     size: "250gm" | "500gm" | "1000gm"
   ) => {
-    const existingItemIndex = cart.findIndex(
-      (item) => item.type === type && item.size === size
-    );
-    const price = Prices[type][size];
+    const priceOfProduct = Prices[type][size];
     const quantityIncrement = size === "250gm" ? 20 : size === "500gm" ? 10 : 5;
-
-    if (existingItemIndex >= 0) {
-      const updatedCart = [...cart];
-      updatedCart[existingItemIndex].quantity += quantityIncrement;
-      setCart(updatedCart);
-    } else {
-      setCart([...cart, { type, size, quantity: quantityIncrement, price }]);
-    }
-  };
-  const handleCancel = () => {
-    setCart([]);
+    const updatedCart = cart.map((item) => {
+      if (item.type == type && item.size == size) {
+        return {
+          ...item,
+          quantity: item.quantity + quantityIncrement,
+          price: item.price + priceOfProduct,
+        };
+      }
+      return item;
+    });
+    setCart(updatedCart);
   };
 
   const getIndividualCounts = (cart: TypeOfCart) => {
-    console.log(cart);
+    console.log("Cart: (get individual counts)", cart);
     const counts: Counts = {
       Reg250: 0,
       Reg500: 0,
@@ -126,105 +111,102 @@ const HomeMain = () => {
   };
 
   const handleCreateOrder = async () => {
-    console.log(cart);
+    setIsLoading(true)
+    console.log("Cart: (when create order is pressed)", cart);
     if (calculateTotal() == 0) {
       toast({
         title: "Add items to cart first!",
         variant: "destructive",
       });
+      setIsLoading(false)
       return;
     }
 
     if (userId) {
       try {
-        const response = await fetch(
-          `/api/get-logged-in-user?clerk=${userId}`,
-          {
-            method: "GET",
-          }
-        );
-        const res = await response.json();
-        if (res.status == 200) {
-          setUserIdInDb(res.message);
-          const totalPrice = calculateTotal();
-          const totalWeight = calculateTotalWeight();
+        const totalPrice = calculateTotal();
+        const totalWeight = calculateTotalWeight();
 
-          const { Reg250, Reg500, Reg1000, Sup250, Sup500, Sup1000 } =
-            getIndividualCounts(cart);
+        const { Reg250, Reg500, Reg1000, Sup250, Sup500, Sup1000 } =
+          getIndividualCounts(cart);
 
-          const orderDetails = {
-            userId: userIdInDb,
-            totalPrice,
-            totalWeight,
-            pickupDate,
-            Reg250,
-            Reg500,
-            Reg1000,
-            Sup250,
-            Sup500,
-            Sup1000,
-          };
+        const orderDetails = {
+          userId: userIdInDb,
+          totalPrice,
+          totalWeight,
+          pickupDate,
+          Reg250,
+          Reg500,
+          Reg1000,
+          Sup250,
+          Sup500,
+          Sup1000,
+        };
 
-          const orderResponse = await fetch("/api/create-new-order", {
-            method: "POST",
-            body: JSON.stringify(orderDetails),
-            headers: {
-              "Content-Type": "application/json",
-            },
+        const orderResponse = await fetch("/api/create-new-order", {
+          method: "POST",
+          body: JSON.stringify(orderDetails),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const result = await orderResponse.json();
+        if (result.status === 200) {
+          toast({
+            title: "Order Placed!",
+            variant: "success",
+            description: "Your Order has been placed Successfully🎊",
+            action: (
+              <ToastAction
+                altText="Past Orders"
+                onClick={() => {
+                  router.push(`/order-history/${userIdInDb}`);
+                }}
+              >
+                View Last Orders
+              </ToastAction>
+            ),
           });
-
-          const result = await orderResponse.json();
-          if (orderResponse.status === 200) {
-            toast({
-              title: "Order Placed!",
-              description: "Your order has been placed successfully!",
-              variant: "success",
-            });
-          } else {
-            toast({
-              title: "Error",
-              description: result.message || "Something went wrong!",
-              variant: "destructive",
-            });
-          }
-        } else if (res.status === 404) {
-          router.push("/add-user-details");
+        } else {
+          toast({
+            title: "Something went wrong",
+            description: result.message || "Try again after sometime.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Error creating order:", error);
       } finally {
         console.log("Yo");
       }
+      setIsLoading(false)
     }
 
-    const newOrder = {
-      id: orderHistory.length + 1,
-      createdAt: formatDate(new Date()),
-      totalPrice: calculateTotal(),
-      totalWeight: calculateTotalWeight(),
-      items: [...cart],
-      pickupDate: formatDate(pickupDate),
-    };
-    console.log(newOrder);
+    // const newOrder = {
+    //   id: orderHistory.length + 1,
+    //   createdAt: formatDate(new Date()),
+    //   totalPrice: calculateTotal(),
+    //   totalWeight: calculateTotalWeight(),
+    //   items: [...cart],
+    //   pickupDate: formatDate(pickupDate),
+    // };
+    // console.log("NewOrder: ", newOrder);
 
     // Add the new order to the order history
-    const updatedOrderHistory = [...orderHistory, newOrder];
-    console.log("Updated Order History: ", updatedOrderHistory);
-    setOrderHistory(updatedOrderHistory);
-    console.log("Order History: ", orderHistory);
-    setCart([]);
-    toast({
-      title: "Order Placed!",
-      variant: "success",
-      description: "Your Order has been placed Successfully🎊",
-    });
+    // const updatedOrderHistory = [...orderHistory, newOrder];
+    // console.log("Updated Order History: ", updatedOrderHistory);
+    // setOrderHistory(updatedOrderHistory);
+    // console.log("Order History: ", orderHistory);
+    
+    setCart(initialCart);
   };
 
   const calculateTotal = () => {
     return cart.reduce((total, item) => {
       const needFor1Kg =
         item.size === "250gm" ? 4 : item.size === "500gm" ? 2 : 1;
-      return total + item.price * (item.quantity / (5 * needFor1Kg));
+      return total + item.price;
     }, 0);
   };
   const calculateTotalWeight = () => {
@@ -236,9 +218,10 @@ const HomeMain = () => {
   };
 
   return (
-    <main className="w-full px-4 lg:grid lg:grid-cols-2 gap-4">
+    <main className="w-full px-4 grid md:grid-cols-2 gap-4 grid-cols-1 justify-between">
       <div className="">
         <p className="text-2xl font-semibold text-center mb-8">New Order</p>
+      <div className="flex flex-col justify-between">
         <div className="grid grid-cols-2 gap-2 drop-shadow-sm shadow-black border rounded-md pt-4 px-1">
           <div>
             <p className="text-emerald-500 font-bold text-2xl mb-4 flex items-center justify-center">
@@ -247,19 +230,19 @@ const HomeMain = () => {
             <div className="grid grid-rows-3 gap-2">
               <Button
                 className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddToCart("Regular", "250gm")}
+                onClick={() => handleAddProduct("Regular", "250gm")}
               >
                 250gm
               </Button>
               <Button
                 className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddToCart("Regular", "500gm")}
+                onClick={() => handleAddProduct("Regular", "500gm")}
               >
                 500gm
               </Button>
               <Button
                 className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddToCart("Regular", "1000gm")}
+                onClick={() => handleAddProduct("Regular", "1000gm")}
               >
                 1kg
               </Button>
@@ -272,19 +255,19 @@ const HomeMain = () => {
             <div className="grid grid-rows-3 gap-2">
               <Button
                 className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddToCart("Super", "250gm")}
+                onClick={() => handleAddProduct("Super", "250gm")}
               >
                 250gm
               </Button>
               <Button
                 className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddToCart("Super", "500gm")}
+                onClick={() => handleAddProduct("Super", "500gm")}
               >
                 500gm
               </Button>
               <Button
                 className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddToCart("Super", "1000gm")}
+                onClick={() => handleAddProduct("Super", "1000gm")}
               >
                 1kg
               </Button>
@@ -316,18 +299,20 @@ const HomeMain = () => {
             />
           </div>
         </div>
+        <div className="sm:hidden">
         <Cart
           cart={cart}
           total={calculateTotal()}
           totalWeight={calculateTotalWeight()}
           pickupDate={pickupDate}
         />
+        </div>
         <div className="flex gap-2">
-          <Button onClick={handleCreateOrder} className="w-full mt-2 font-bold">
+          <Button onClick={handleCreateOrder} disabled={isLoading} className="w-full mt-2 font-bold">
             Create Order
           </Button>
-          {cart.length > 0 ? (
-            <Button onClick={handleCancel} className="w-1/3 mt-2 font-bold">
+          {calculateTotal() > 0 ? (
+            <Button onClick={handleCancel} disabled={isLoading} className="w-1/3 mt-2 font-bold">
               Cancel
             </Button>
           ) : (
@@ -335,12 +320,33 @@ const HomeMain = () => {
           )}
         </div>
       </div>
-      <div className="mt-10">
-        {orderHistory.length > 0 && userIdInDb ? (
-          <OrderHistory orders={orderHistory} />
+      <div className="flex items-center justify-center">
+        <Button
+          className="my-4 w-full font-bold bottom-0"
+          variant={"secondary"}
+          onClick={() => {
+            router.push(`/order-history/${userIdInDb}`);
+          }}
+        >
+          View Last Orders
+          {/* {userIdInDb ? (
+          // {true ? (
+          <OrderHistory userId={userIdInDb} />
         ) : (
           ""
-        )}
+        )} */}
+        </Button>
+      </div>
+      </div>
+      <div className="hidden w-full sm:flex items-center justify-center">
+        <div className="w-full max-w-sm">
+        <Cart
+          cart={cart}
+          total={calculateTotal()}
+          totalWeight={calculateTotalWeight()}
+          pickupDate={pickupDate}
+        />
+        </div>
       </div>
     </main>
   );

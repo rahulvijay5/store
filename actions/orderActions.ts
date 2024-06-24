@@ -1,9 +1,7 @@
-import { currentUser } from "@clerk/nextjs";
 import { prun } from "@/lib/prisma";
-import { createErrorHandler } from "next/dist/server/app-render/create-error-handler";
 import { redirect } from "next/navigation";
-import { TypeOfCart } from "@/lib/types";
-
+import { OrderDbStyle, TypeOfCart } from "@/lib/types";
+import { Prices } from "@/lib/constants";
 
 export async function createNewOrder(
   cart: TypeOfCart,
@@ -12,26 +10,15 @@ export async function createNewOrder(
   pickupDate: Date,
   userId: number
 ) {
-  // const user = await currentUser()
-  // if(!user){
-  //     throw new Error("User not found!")
-  // }
-
   try {
-    const order = await prun.order.create(
-      {
-        data: {
-          userId: userId, // Assuming you have userId available
-          totalPrice: totalPrice,
-          totalWeight: totalWeight,
-          pickupDate: pickupDate,
-        },
-      }
-      // include: {
-      // items: true, // Include order items in the response
-      // },
-      // }
-    );
+    const order = await prun.order.create({
+      data: {
+        userId: userId, // Assuming you have userId available
+        totalPrice: totalPrice,
+        totalWeight: totalWeight,
+        pickupDate: pickupDate,
+      },
+    });
     return order;
   } catch (error) {
     console.error("Error creating order:", error);
@@ -56,19 +43,71 @@ export async function getLoggedInUser(clerkId: string) {
   }
 }
 
-export async function GetUserOrderHistory(userId:number){
-  try{
-    const orders = await prun.order.findMany({
-      where:{
-        userId:userId
-      },
-      orderBy:{
-        createdAt:"desc"
-      }
+export const formatNumber = (number: number) => {
+  return new Intl.NumberFormat("en-IN").format(number);
+};
+
+export const formatItems = (order: OrderDbStyle) => {
+  const items = [];
+  if (order.Reg250)
+    items.push({
+      type: "Regular",
+      size: "250gm",
+      quantity: order.Reg250,
+      price: Prices.Regular["250gm"],
     });
-    return orders
-  }catch(error){
-    console.error("Error finding the user: ",error);
+  if (order.Reg500)
+    items.push({
+      type: "Regular",
+      size: "500gm",
+      quantity: order.Reg500,
+      price: Prices.Regular["500gm"],
+    });
+  if (order.Reg1000)
+    items.push({
+      type: "Regular",
+      size: "1kg",
+      quantity: order.Reg1000,
+      price: Prices.Regular["1000gm"],
+    });
+  if (order.Sup250)
+    items.push({
+      type: "Super",
+      size: "250gm",
+      quantity: order.Sup250,
+      price: Prices.Super["250gm"],
+    });
+  if (order.Sup500)
+    items.push({
+      type: "Super",
+      size: "500gm",
+      quantity: order.Sup500,
+      price: Prices.Super["500gm"],
+    });
+  if (order.Sup1000)
+    items.push({
+      type: "Super",
+      size: "1kg",
+      quantity: order.Sup1000,
+      price: Prices.Super["1000gm"],
+    });
+  return items;
+};
+
+export async function GetUserOrderHistory(userId: number) {
+  try {
+    const orders = await prun.order.findMany({
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    console.log(orders);
+    return orders;
+  } catch (error) {
+    console.error("Error finding the user: ", error);
     throw error;
   }
 }

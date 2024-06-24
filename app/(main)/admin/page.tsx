@@ -11,11 +11,10 @@ const page = async () => {
   if(cmail && allowedMails.includes(cmail)){
     return (
       <div className='mt-4'>
-          <AdminDashboard/> 
+          <AdminDashboard mail={cmail}/> 
       </div>
     )
   }else{
-    console.log("Hello")
     redirect("/")
   }
 }
