@@ -40,9 +40,10 @@ export default function AdminDashboard({ mail }: { mail: string }) {
   const [orders, setOrders] = useState<OrderDbStyleWithUser[]>([]);
   const [lastOrders, setLastOrders] = useState<OrderDbStyleWithUser[]>([]);
   const [isInsightsOpen, setIsInsightsOpen] = useState<boolean>(false);
+  const [updatedTime, setUpdatedTime] = useState<number>(0);
 
   const router = useRouter();
-  const soundEffect = new Audio("/notification.mp3");
+  // const soundEffect = new Audio("/notification.mp3");
 
   const getOrders = async (mail: string, take: number) => {
     const response = await fetch(
@@ -57,32 +58,40 @@ export default function AdminDashboard({ mail }: { mail: string }) {
       // console.log("Got this in orders:", res.message);
     }
   };
+
+  const handleRefresh = () => {
+    setTake(8);
+    setUpdatedTime(0)
+    getOrders(mail, take);
+  };
+  useEffect(() => {
+    const timeInterval = setInterval(() => {
+      setUpdatedTime((prev) => prev + 1);
+    }, 60000); // Update every second
+    return () => clearInterval(timeInterval);
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(async () => {
-      console.log("I am called again!");
-
       await getOrders(mail, take);
-
+      setUpdatedTime(0);
       if (JSON.stringify(orders) === JSON.stringify(lastOrders)) {
         console.log("No change");
       } else {
         console.log("Aaya aaya, naya order aaya 🥳🥳");
         setLastOrders(orders);
       }
-    }, 30000);
-
+    }, 600000);
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, [orders, lastOrders, getOrders, mail, take]);
 
-  const handleRefresh = () => {
-    setTake(8);
+  useEffect(() => {
     getOrders(mail, take);
-  };
+  }, []);
 
   const handleViewMore = () => {
     setTake((prevTake) => prevTake + 8);
-    console.log(take);
     getOrders(mail, take);
   };
   const handleNewOrder = () => {
@@ -114,8 +123,8 @@ export default function AdminDashboard({ mail }: { mail: string }) {
           New Order <PlusCircle />
         </Button>
         <div className="items-center hidden justify-center md:flex w-full">
-        <Searchbox />
-      </div>
+          <Searchbox />
+        </div>
         <div className="flex gap-2">
           <Button
             variant={"ghost"}
@@ -131,6 +140,7 @@ export default function AdminDashboard({ mail }: { mail: string }) {
           </Button>
         </div>
       </div>
+      <div className="flex w-full justify-end mb-2"><p className="text-sm text-gray-600">Last updated {updatedTime} mins ago</p></div>
       <div className="mb-2 flex w-full items-center md:hidden justify-end">
         <Searchbox />
       </div>
@@ -161,10 +171,20 @@ export default function AdminDashboard({ mail }: { mail: string }) {
                 <TableCell className="text-center">
                   {order.totalWeight}kg
                 </TableCell>
-                  <TableCell className="text-center text-nowrap">
-                    <div className="">{new Date(order.createdAt).toLocaleDateString("en-IN", {day: 'numeric', month:'short'})}</div> 
-                    <div className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleTimeString("en-IN", {hour: '2-digit', minute:'2-digit'})} </div>
-                  </TableCell>
+                <TableCell className="text-center text-nowrap">
+                  <div className="">
+                    {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {new Date(order.createdAt).toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                  </div>
+                </TableCell>
                 <TableCell className="text-center">
                   {new Date(order.pickupDate).toLocaleDateString("en-IN", {
                     day: "numeric",
@@ -226,7 +246,12 @@ export default function AdminDashboard({ mail }: { mail: string }) {
                         <div className="flex justify-between">
                           <div className=" text-gray-600 text-sm">Name</div>
                           <span className="font-light text-gray-700 text-sm text-right">
-                            {new Date(order.createdAt).toLocaleString("en-In" , {day:"numeric",month:"short",hour: '2-digit', minute:'2-digit'})}
+                            {new Date(order.createdAt).toLocaleString("en-In", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </span>
                         </div>
                         <div className="text-lg">

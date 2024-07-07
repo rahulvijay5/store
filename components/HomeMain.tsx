@@ -12,6 +12,7 @@ import { useToast } from "./ui/use-toast";
 import { TypeOfCart, CartItem, Counts, Order } from "@/lib/types";
 import { Prices } from "@/lib/constants";
 import { ToastAction } from "./ui/toast";
+import { cn } from "@/lib/utils";
 
 const HomeMain = () => {
   const initialCart = [
@@ -25,7 +26,7 @@ const HomeMain = () => {
 
   const [cart, setCart] = useState<CartItem[]>(initialCart);
   const [userIdInDb, setUserIdInDb] = useState<number>();
-  const [isLoading,setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [pickupDate, setPickupDate] = useState<Date | null>(new Date());
   const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(false);
 
@@ -111,14 +112,14 @@ const HomeMain = () => {
   };
 
   const handleCreateOrder = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     console.log("Cart: (when create order is pressed)", cart);
     if (calculateTotal() == 0) {
       toast({
         title: "Add items to cart first!",
         variant: "destructive",
       });
-      setIsLoading(false)
+      setIsLoading(false);
       return;
     }
 
@@ -180,25 +181,8 @@ const HomeMain = () => {
       } finally {
         console.log("Yo");
       }
-      setIsLoading(false)
+      setIsLoading(false);
     }
-
-    // const newOrder = {
-    //   id: orderHistory.length + 1,
-    //   createdAt: formatDate(new Date()),
-    //   totalPrice: calculateTotal(),
-    //   totalWeight: calculateTotalWeight(),
-    //   items: [...cart],
-    //   pickupDate: formatDate(pickupDate),
-    // };
-    // console.log("NewOrder: ", newOrder);
-
-    // Add the new order to the order history
-    // const updatedOrderHistory = [...orderHistory, newOrder];
-    // console.log("Updated Order History: ", updatedOrderHistory);
-    // setOrderHistory(updatedOrderHistory);
-    // console.log("Order History: ", orderHistory);
-    
     setCart(initialCart);
   };
 
@@ -218,134 +202,137 @@ const HomeMain = () => {
   };
 
   return (
-    <main className="w-full px-4 grid md:grid-cols-2 gap-4 grid-cols-1 justify-between">
-      <div className="">
-        <p className="text-2xl font-semibold text-center mb-8">New Order</p>
-      <div className="flex flex-col justify-between">
-        <div className="grid grid-cols-2 gap-2 drop-shadow-sm shadow-black border rounded-md pt-4 px-1">
-          <div>
-            <p className="text-emerald-500 font-bold text-2xl mb-4 flex items-center justify-center">
-              Regular
-            </p>
-            <div className="grid grid-rows-3 gap-2">
-              <Button
-                className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddProduct("Regular", "250gm")}
-              >
-                250gm
-              </Button>
-              <Button
-                className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddProduct("Regular", "500gm")}
-              >
-                500gm
-              </Button>
-              <Button
-                className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddProduct("Regular", "1000gm")}
-              >
-                1kg
-              </Button>
+    <main className={cn(`${calculateTotal()==0?"flex items-center justify-center":"grid md:grid-cols-2 gap-4 grid-cols-1 justify-between"} w-full px-4`)}>
+      <div className={cn(`${calculateTotal()==0?"max-w-sm":""} w-full max-w-md`)}>
+        <p className="text-3xl font-semibold text-center mb-8">Vijay Shree <span className="text-emerald-500 border-b-4 rounded border-black dark:border-white">Tea</span> Traders</p>
+        <p className="text-xl font-semibold text-center mb-2">New Order</p>
+        <div className="flex flex-col justify-between ">
+          <div className="grid grid-cols-2 gap-2 shadow-sm shadow-gray-600 border rounded-md pt-4 px-1 md:p-4">
+            <div>
+              <p className="text-emerald-500 font-bold text-2xl mb-4 flex items-center justify-center">
+                Regular
+              </p>
+              <div className="grid grid-rows-3 gap-2">
+                <Button
+                  className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
+                  onClick={() => handleAddProduct("Regular", "250gm")}
+                >
+                  250gm
+                </Button>
+                <Button
+                  className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
+                  onClick={() => handleAddProduct("Regular", "500gm")}
+                >
+                  500gm
+                </Button>
+                <Button
+                  className="bg-emerald-500 hover:bg-emerald-700 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
+                  onClick={() => handleAddProduct("Regular", "1000gm")}
+                >
+                  1kg
+                </Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-yellow-500 font-bold text-2xl mb-4 flex items-center justify-center">
+                Super
+              </p>
+              <div className="grid grid-rows-3 gap-2">
+                <Button
+                  className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
+                  onClick={() => handleAddProduct("Super", "250gm")}
+                >
+                  250gm
+                </Button>
+                <Button
+                  className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
+                  onClick={() => handleAddProduct("Super", "500gm")}
+                >
+                  500gm
+                </Button>
+                <Button
+                  className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
+                  onClick={() => handleAddProduct("Super", "1000gm")}
+                >
+                  1kg
+                </Button>
+              </div>
             </div>
           </div>
-          <div>
-            <p className="text-yellow-500 font-bold text-2xl mb-4 flex items-center justify-center">
-              Super
-            </p>
-            <div className="grid grid-rows-3 gap-2">
-              <Button
-                className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddProduct("Super", "250gm")}
-              >
-                250gm
-              </Button>
-              <Button
-                className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddProduct("Super", "500gm")}
-              >
-                500gm
-              </Button>
-              <Button
-                className="bg-yellow-500 hover:bg-yellow-600 font-extrabold shadow-sm shadow-gray-500 text-xl rounded-md text-center p-10 cursor-pointer"
-                onClick={() => handleAddProduct("Super", "1000gm")}
-              >
-                1kg
-              </Button>
+          <div className="grid grid-cols-4 gap-2 mt-4 w-full  items-center">
+            <span>Pickup Date:</span>
+            <Button
+              onClick={() => setPickupDate(new Date())}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Today
+            </Button>
+            <Button
+              onClick={() => setPickupDate(new Date(Date.now() + 86400000))}
+              className="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded"
+            >
+              Tomorrow
+            </Button>
+            <div className="w-full text-center border-2 rounded border-black/50">
+              <DatePicker
+                selected={pickupDate}
+                onChange={(date: Date | null) => setPickupDate(date)}
+                dateFormat="dd/MM/yyyy"
+                minDate={new Date()}
+                className="bg-white text-black p-2 w-full rounded"
+                placeholderText="Pick a date"
+              />
             </div>
           </div>
-        </div>
-        <div className="grid grid-cols-4 gap-2 mt-4 w-full  items-center">
-          <span>Pickup Date:</span>
-          <Button
-            onClick={() => setPickupDate(new Date())}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Today
-          </Button>
-          <Button
-            onClick={() => setPickupDate(new Date(Date.now() + 86400000))}
-            className="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded"
-          >
-            Tomorrow
-          </Button>
-          <div className="w-full text-center border-2 rounded border-black/50">
-            <DatePicker
-              selected={pickupDate}
-              onChange={(date: Date | null) => setPickupDate(date)}
-              dateFormat="dd/MM/yyyy"
-              minDate={new Date()}
-              className="bg-white text-black p-2 w-full rounded"
-              placeholderText="Pick a date"
+          <div className="sm:hidden">
+            <Cart
+              cart={cart}
+              total={calculateTotal()}
+              totalWeight={calculateTotalWeight()}
+              pickupDate={pickupDate}
             />
           </div>
-        </div>
-        <div className="sm:hidden">
-        <Cart
-          cart={cart}
-          total={calculateTotal()}
-          totalWeight={calculateTotalWeight()}
-          pickupDate={pickupDate}
-        />
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={handleCreateOrder} disabled={isLoading} className="w-full mt-2 font-bold">
-            Create Order
-          </Button>
-          {calculateTotal() > 0 ? (
-            <Button onClick={handleCancel} disabled={isLoading} className="w-1/3 mt-2 font-bold">
-              Cancel
+          <div className="flex gap-2">
+            <Button
+              onClick={handleCreateOrder}
+              disabled={isLoading}
+              className="w-full mt-2 font-bold"
+            >
+              Create Order
             </Button>
-          ) : (
-            ""
-          )}
+            {calculateTotal() > 0 ? (
+              <Button
+                onClick={handleCancel}
+                disabled={isLoading}
+                className="w-1/3 mt-2 font-bold"
+              >
+                Cancel
+              </Button>
+            ) : (
+              ""
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-center">
+          <Button
+            className="my-4 w-full font-bold bottom-0"
+            variant={"secondary"}
+            onClick={() => {
+              router.push(`/order-history/${userIdInDb}`);
+            }}
+          >
+            View Last Orders
+          </Button>
         </div>
       </div>
-      <div className="flex items-center justify-center">
-        <Button
-          className="my-4 w-full font-bold bottom-0"
-          variant={"secondary"}
-          onClick={() => {
-            router.push(`/order-history/${userIdInDb}`);
-          }}
-        >
-          View Last Orders
-          {/* {userIdInDb ? (
-          // {true ? (
-          <OrderHistory userId={userIdInDb} />
-        ) : (
-          ""
-        )} */}
-        </Button>
-      </div>
-      </div>
-      <div className="hidden w-full sm:flex items-center justify-center">
+      <div className={cn(`${calculateTotal()==0?"hidden":"hidden w-full sm:flex items-center justify-center"}`)}>
         <div className="w-full max-w-sm">
-        <Cart
-          cart={cart}
-          total={calculateTotal()}
-          totalWeight={calculateTotalWeight()}
-          pickupDate={pickupDate}
-        />
+          <Cart
+            cart={cart}
+            total={calculateTotal()}
+            totalWeight={calculateTotalWeight()}
+            pickupDate={pickupDate}
+          />
         </div>
       </div>
     </main>
