@@ -43,7 +43,7 @@ export function Searchbox() {
       fetchResults(value)
     }, 1000)
     return () => clearTimeout(timeoutId)
-  }, [value])
+  }, [value,fetchResults])
 
   const router = useRouter();
 

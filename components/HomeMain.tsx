@@ -65,7 +65,7 @@ const HomeMain = () => {
   useEffect(() => {
     console.log("useEffect triggered as site entered");
     checkUser();
-  }, [isInitialFetchDone]);
+  }, [isInitialFetchDone,checkUser]);
 
   const handleCancel = () => {
     setCart(initialCart);

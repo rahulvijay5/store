@@ -34,7 +34,7 @@ export default function OrderHistory({ userId }: { userId: number }) {
     console.log("useEffect triggered on order history page");
     getOrders(userId);
     setIsLoading(false);
-  }, []);
+  }, [userId]);
 
   const handleDownloadReceipt = async (order: OrderDbStyle) => {
     const doc = new jsPDF();
